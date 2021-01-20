@@ -1,19 +1,24 @@
+MD ?= $(CURDIR)/resume.md
+PDF := $(MD:.md=.pdf)
+HTML := $(MD:.md=.html)
+CSS := $(CURDIR)/resume.css
+
 .PHONY: resume watch clean
 
-resume: resume.pdf resume.html
+resume: $(PDF) $(HTML)
 
 watch:
-	ls *.md *.css | entr make resume
+	\ls $(MD) $(CSS) | entr $(MAKE) resume
 
-name := $(shell grep "^\#" resume.md | head -1 | sed -e 's/^\#[[:space:]]*//' | xargs)
+name := $(shell grep "^\#" $(MD) | head -1 | sed -e 's/^\#[[:space:]]*//' | xargs)
 
-resume.html: preamble.html resume.md postamble.html
-	cat preamble.html | sed -e 's/___NAME___/$(name)/' > $@
-	python -m markdown -x smarty resume.md >> $@
-	cat postamble.html >> $@
+$(HTML): preamble.html $(MD) postamble.html
+	\cat preamble.html | sed -e 's/___NAME___/$(name)/g' -e 's;__CSS__;$(CSS);g' > $@
+	\python -m markdown -x smarty $(MD) >> $@
+	\cat postamble.html >> $@
 
-resume.pdf: resume.html resume.css
-	weasyprint resume.html resume.pdf
+$(PDF): $(HTML) $(CSS)
+	\weasyprint $< $@
 
 clean:
-	rm -f resume.html resume.pdf
+	$(RM) $(HTML) $(PDF)
